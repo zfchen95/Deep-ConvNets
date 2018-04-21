@@ -45,7 +45,7 @@ torch.manual_seed(111)
 # <<TODO#5>> Based on the val set performance, decide how many
 # epochs are apt for your model.
 # ---------
-EPOCHS = 10
+EPOCHS = 1
 # ---------
 
 IS_GPU = False
@@ -184,12 +184,12 @@ class BaseNet(nn.Module):
         # Do not have a maxpool layer after every conv layer in your
         # deeper network as it leads to too much loss of information.
 
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.conv2 = nn.Conv2d(6, 9, 5)
+        self.conv1 = nn.Conv2d(3, 6, 7)
+        self.conv2 = nn.Conv2d(6, 8, 7)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv3 = nn.Conv2d(9, 16, 5)
-        self.dropout1 = nn.Dropout(p=0.5)
-        self.dropout2 = nn.Dropout(p=0.3)
+        self.conv3 = nn.Conv2d(8, 16, 3)
+        self.dropout1 = nn.Dropout(p=0.3)
+        self.dropout2 = nn.Dropout(p=0.2)
         # <<TODO#3>> Add more linear (fc) layers
         # <<TODO#4>> Add normalization layers after linear and
         # experiment inserting them before or after ReLU (nn.BatchNorm1d)
@@ -197,9 +197,12 @@ class BaseNet(nn.Module):
         # http://pytorch.org/docs/master/nn.html#torch.nn.Sequential
 
         self.fc_net = nn.Sequential(
-            nn.Linear(16 * 4 * 4, TOTAL_CLASSES * 2),
+            nn.Linear(16 * 8 * 8, TOTAL_CLASSES * 4),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.2),
+            nn.Dropout(p=0.3),
+            nn.Linear(TOTAL_CLASSES * 4, TOTAL_CLASSES * 2),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.3),
             nn.Linear(TOTAL_CLASSES * 2, TOTAL_CLASSES),
         )
 
@@ -213,12 +216,12 @@ class BaseNet(nn.Module):
         x = self.dropout2(self.pool(F.relu(self.conv2(x))))
         # Output size = 24 // 2 * 24 // 2 = 12 * 12
 
-        x = self.dropout2(self.pool(F.relu(self.conv3(x))))
+        x = self.dropout2(F.relu(self.conv3(x)))
         # Output size = 8//2 x 8//2 = 4 x 4
 
         # See the CS231 link to understand why this is 16*5*5!
         # This will help you design your own deeper network
-        x = x.view(-1, 16 * 4 * 4)
+        x = x.view(-1, 16 * 8 * 8)
         x = self.fc_net(x)
 
         # No softmax is needed as the loss function in step 3
