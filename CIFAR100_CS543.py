@@ -116,10 +116,15 @@ labels while all the labels in the test set are set to 0.
 # You shouldn't have any data augmentation in test_transform (val or test data is never augmented).
 # ---------------------
 
-train_transform = transforms.Compose(
-    [transforms.ToTensor()])
-test_transform = transforms.Compose(
-    [transforms.ToTensor()])
+train_transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0, 0, 0], std=[1, 1, 1])
+    ])
+test_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0, 0, 0], std=[1, 1, 1])
+     ])
 # ---------------------
 
 trainset = CIFAR100_CS543(root=PATH_TO_CIFAR100_CS543, fold="train",
@@ -184,12 +189,14 @@ class BaseNet(nn.Module):
         # Do not have a maxpool layer after every conv layer in your
         # deeper network as it leads to too much loss of information.
 
-        self.conv1 = nn.Conv2d(3, 6, 7)
-        self.conv2 = nn.Conv2d(6, 8, 7)
+        self.conv1 = nn.Conv2d(3, 6, 9)
+        self.conv1_bn = nn.BatchNorm2d(6)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv2_bn = nn.BatchNorm2d(16)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv3 = nn.Conv2d(8, 16, 3)
-        self.dropout1 = nn.Dropout(p=0.3)
-        self.dropout2 = nn.Dropout(p=0.2)
+        # self.conv3 = nn.Conv2d(8, 16, 3)
+        # self.dropout1 = nn.Dropout(p=0.3)
+        # self.dropout2 = nn.Dropout(p=0.2)
         # <<TODO#3>> Add more linear (fc) layers
         # <<TODO#4>> Add normalization layers after linear and
         # experiment inserting them before or after ReLU (nn.BatchNorm1d)
@@ -197,26 +204,29 @@ class BaseNet(nn.Module):
         # http://pytorch.org/docs/master/nn.html#torch.nn.Sequential
 
         self.fc_net = nn.Sequential(
-            nn.Linear(16 * 8 * 8, TOTAL_CLASSES * 4),
+            nn.Linear(16 * 8 * 8, 1024),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+            nn.Linear(1024, 512),
             nn.ReLU(inplace=True),
             nn.Dropout(p=0.3),
-            nn.Linear(TOTAL_CLASSES * 4, TOTAL_CLASSES * 2),
+            nn.Linear(512, 256),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.3),
-            nn.Linear(TOTAL_CLASSES * 2, TOTAL_CLASSES),
+            nn.Dropout(p=0.2),
+            nn.Linear(256, TOTAL_CLASSES),
         )
 
     def forward(self, x):
         # <<TODO#3&#4>> Based on the above edits, you'll have
         # to edit the forward pass description here.
 
-        x = self.dropout1(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv1(x)))
         # Output size = 28 * 28
 
-        x = self.dropout2(self.pool(F.relu(self.conv2(x))))
+        x = F.relu(self.conv2_bn(self.conv2(x)))
         # Output size = 24 // 2 * 24 // 2 = 12 * 12
 
-        x = self.dropout2(F.relu(self.conv3(x)))
+        # x = self.dropout2(F.relu(self.conv3(x)))
         # Output size = 8//2 x 8//2 = 4 x 4
 
         # See the CS231 link to understand why this is 16*5*5!
