@@ -182,11 +182,12 @@ class BaseNet(nn.Module):
         self.conv1_bn = nn.BatchNorm2d(96)
         self.conv2 = nn.Conv2d(96, 256, 5)
         self.conv2_bn = nn.BatchNorm2d(256)
-        self.pool = nn.AvgPool2d(2, 2)
+        self.pool = nn.MaxPool2d(2, 2)
         self.conv3 = nn.Conv2d(256, 256, 3)
         self.conv3_bn = nn.BatchNorm2d(256)
         self.conv4 = nn.Conv2d(256, 96, 3)
         self.conv4_bn = nn.BatchNorm2d(96)
+        self.pool = nn.MaxPool2d(2, 2)
         # <<TODO#3>> Add more linear (fc) layers
         # <<TODO#4>> Add normalization layers after linear and
         # experiment inserting them before or after ReLU (nn.BatchNorm1d)
@@ -194,10 +195,10 @@ class BaseNet(nn.Module):
         # http://pytorch.org/docs/master/nn.html#torch.nn.Sequential
 
         self.fc_net = nn.Sequential(
-            nn.Linear(96 * 6 * 6, 2048),
-            nn.BatchNorm1d(2048),
+            nn.Linear(96 * 3 * 3, 1024),
+            nn.BatchNorm1d(1024),
             nn.ReLU(inplace=True),
-            nn.Linear(2048, 512),
+            nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(inplace=True),
             nn.Linear(512, TOTAL_CLASSES),
@@ -214,10 +215,10 @@ class BaseNet(nn.Module):
         # x = self.pool(F.relu(self.conv2_bn(self.conv2(x))))
         # Output size = 10//2 x 10//2 = 5 x 5
         x = F.relu(self.conv3_bn(self.conv3(x)))
-        x = F.relu(self.conv4_bn(self.conv4(x)))
+        x = self.pool(F.relu(self.conv4_bn(self.conv4(x))))
         # See the CS231 link to understand why this is 16*5*5!
         # This will help you design your own deeper network
-        x = x.view(-1, 96 * 6 * 6)
+        x = x.view(-1, 96 * 3 * 3)
         x = self.fc_net(x)
 
         # No softmax is needed as the loss function in step 3
