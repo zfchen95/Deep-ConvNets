@@ -551,23 +551,22 @@ for epoch in range(EPOCHS):  # loop over the dataset multiple times
 # Plot train loss over epochs and val set accuracy over epochs
 # Nothing to change here
 # -------------
-def plot_Acc():
-    plt.subplot(2, 1, 1)
-    plt.ylabel('Train loss')
-    plt.plot(np.arange(EPOCHS), train_loss_over_epochs, 'k-')
-    plt.title('(NetID) train loss and val accuracy')
-    plt.xticks(np.arange(EPOCHS, dtype=int))
-    plt.grid(True)
+plt.subplot(2, 1, 1)
+plt.ylabel('Train loss')
+plt.plot(np.arange(EPOCHS), train_loss_over_epochs, 'k-')
+plt.title('(NetID) train loss and val accuracy')
+plt.xticks(np.arange(EPOCHS, dtype=int))
+plt.grid(True)
 
-    plt.subplot(2, 1, 2)
-    plt.plot(np.arange(EPOCHS), val_accuracy_over_epochs, 'b-')
-    plt.ylabel('Val accuracy')
-    plt.xlabel('Epochs')
-    plt.xticks(np.arange(EPOCHS, dtype=int))
-    plt.grid(True)
-    plt.savefig("plot.png")
-    plt.close(fig)
-    print('Finished Training')
+plt.subplot(2, 1, 2)
+plt.plot(np.arange(EPOCHS), val_accuracy_over_epochs, 'b-')
+plt.ylabel('Val accuracy')
+plt.xlabel('Epochs')
+plt.xticks(np.arange(EPOCHS, dtype=int))
+plt.grid(True)
+plt.savefig("plot.png")
+plt.close(fig)
+print('Finished Training')
 # -------------
 
 ########################################################################
@@ -576,29 +575,28 @@ def plot_Acc():
 ########################################################################
 
 
-def test():
     # Check out why .eval() is important!
     # https://discuss.pytorch.org/t/model-train-and-model-eval-vs-model-and-model-eval/5744/2
-    net.eval()
+net.eval()
 
-    total = 0
-    predictions = []
-    for data in testloader:
-        images, labels = data
+total = 0
+predictions = []
+for data in testloader:
+    images, labels = data
 
-        # For training on GPU, we need to transfer net and data onto the GPU
-        # http://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html#training-on-gpu
-        if IS_GPU:
-            images = images.cuda()
-            labels = labels.cuda()
+    # For training on GPU, we need to transfer net and data onto the GPU
+    # http://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html#training-on-gpu
+    if IS_GPU:
+        images = images.cuda()
+        labels = labels.cuda()
 
-        outputs = net(Variable(images))
-        _, predicted = torch.max(outputs.data, 1)
-        predictions.extend(list(predicted.cpu().numpy()))
-        total += labels.size(0)
+    outputs = net(Variable(images))
+    _, predicted = torch.max(outputs.data, 1)
+    predictions.extend(list(predicted.cpu().numpy()))
+    total += labels.size(0)
 
-    with open('submission_netid.csv', 'w') as csvfile:
-        wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-        wr.writerow(["Id", "Prediction1"])
-        for l_i, label in enumerate(predictions):
-            wr.writerow([str(l_i), str(label)])
+with open('submission_netid.csv', 'w') as csvfile:
+    wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+    wr.writerow(["Id", "Prediction1"])
+    for l_i, label in enumerate(predictions):
+        wr.writerow([str(l_i), str(label)])
